@@ -1,12 +1,7 @@
-Jena2 README
+Jena README
 ============
 
-Welcome to Apache Jena,  a Java framework for 
-writing Semantic Web applications.
+Welcome to Apache Jena,  a Java framework for writing Semantic Web applications.
 
-Documentation can be found on the web at
-http://jena.apache.org/
-
-There is a mailing lists for questions and feedback:
-users@jena.apache.org
-
+This repository is a fork of [Apache Jena](https://github.com/apache/jena.git).
+Its goal is to implement a forward-chaining version of [Transaction Logic](https://en.wikipedia.org/wiki/Transaction_logic) into Jena's RETE network. 
