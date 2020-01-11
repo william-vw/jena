@@ -411,6 +411,14 @@ public class Rule implements ClauseEntry {
 	}
 
 	/**
+	 * Returns whether this is a transactional rule, i.e., when a single clause
+	 * fails all other clauses should be rolled back, if needed.
+	 */
+	public boolean isTransactional() {
+		return isTransactional;
+	}
+
+	/**
 	 * Returns true if the rule does not depend on any data, and so should be
 	 * treated as an axiom.
 	 */
@@ -707,6 +715,10 @@ public class Rule implements ClauseEntry {
 		private static final int NORMAL = 0;
 		private static final int STARTED_LITERAL = 1;
 
+		// Level parse state flags
+		private static final int TOP_LEVEL = 0;
+		private static final int CLAUSE_LEVEL = 1;
+
 		// Conjunction state flags
 		protected static final char CLASSIC_CONJ_STATE = 0;
 		protected static final char SERIAL_CONJ_STATE = 1;
@@ -716,9 +728,6 @@ public class Rule implements ClauseEntry {
 		private static final char SERIAL_CONJ_SEP = '&';
 		// (index of separator in list should be same as corresponding state flag)
 		private static final List<Character> CONJ_SEP = Arrays.asList(CLASSIC_CONJ_SEP, SERIAL_CONJ_SEP);
-
-		/** current type of conjunction found **/
-		private int conjState = -1;
 
 		/** Tokenizer */
 		private Tokenizer stream;
@@ -731,6 +740,12 @@ public class Rule implements ClauseEntry {
 
 		/** Literal parse state */
 		private int literalState = NORMAL;
+
+		/** Level parse state **/
+		private int levelState = TOP_LEVEL;
+
+		/** Current type of conjunction **/
+		private int conjState = -1;
 
 		/** Trace back of recent tokens for error reporting */
 		protected List<String> priorTokens = new ArrayList<>();
@@ -808,18 +823,8 @@ public class Rule implements ClauseEntry {
 			} else {
 				String token = stream.nextToken();
 				if (literalState == NORMAL) {
-					// TODO
-					/**
-					 * .. this parser implementation is too simple for our purposes
-					 * 
-					 * only if at top level, consider '&' as an allowed separator (requires keeping
-					 * current state; e.g., parsing clause, etc)
-					 * 
-					 * if at top level, if matching either ',' or '&', do conj-state check
-					 */
-
 					// Skip separators unless within a literal
-					while (isSeparator(token)) {
+					while (checkSeparator(token)) {
 						token = stream.nextToken();
 					}
 				}
@@ -870,7 +875,7 @@ public class Rule implements ClauseEntry {
 		/**
 		 * Returns true if token is an skippable separator
 		 */
-		boolean isSeparator(String token) {
+		boolean checkSeparator(String token) {
 			if (token.length() != 1)
 				return false;
 
@@ -878,18 +883,27 @@ public class Rule implements ClauseEntry {
 			if (Character.isWhitespace(c))
 				return true;
 
-			int newConjState = CONJ_SEP.indexOf(c);
-			System.out.println(c + " - " + newConjState);
-			if (newConjState != -1) {
-				if (conjState == -1)
-					conjState = newConjState;
-				else if (newConjState != conjState)
-					throw new ParserException("Multiple types of conjunction currently not supported", this);
+			switch (levelState) {
+			case TOP_LEVEL:
+				int newConjState = CONJ_SEP.indexOf(c);
+				if (newConjState != -1) {
+					if (conjState == -1)
+						conjState = newConjState;
+					else if (newConjState != conjState)
+						throw new ParserException("Multiple types of conjunction (',', '&') currently not supported",
+								this);
 
-				return true;
+					return true;
 
-			} else
+				} else
+					return false;
+
+			case CLAUSE_LEVEL:
+				return (c == CLASSIC_CONJ_SEP);
+
+			default:
 				return false;
+			}
 		}
 
 		/**
@@ -1037,10 +1051,18 @@ public class Rule implements ClauseEntry {
 			return nodeList;
 		}
 
+		ClauseEntry parseClause() {
+			levelState = CLAUSE_LEVEL;
+			ClauseEntry e = doParseClause();
+			levelState = TOP_LEVEL;
+
+			return e;
+		}
+
 		/**
 		 * Parse a clause, could be a triple pattern, a rule or a functor
 		 */
-		ClauseEntry parseClause() {
+		ClauseEntry doParseClause() {
 			String token = peekToken();
 			if (token.equals("(")) {
 				List<Node> nodes = parseNodeList();

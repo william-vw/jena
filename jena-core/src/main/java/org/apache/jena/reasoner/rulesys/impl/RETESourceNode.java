@@ -22,10 +22,25 @@ package org.apache.jena.reasoner.rulesys.impl;
  * Interface for all non-terminal nodes in the network.
  */
 public interface RETESourceNode extends RETENode {
-    
-    /**
-     * Set the continuation node for this node.
-     */
-    public void setContinuation(RETESinkNode continuation);
 
+	/** For testing only **/
+	public String getId();
+	
+	/**
+	 * Set the continuation node for this node.
+	 */
+	public void setContinuation(RETESinkNode continuation);
+
+	/**
+	 * Get the continuation node for this node.
+	 */
+	public RETESinkNode getContinuation();
+	
+	/**
+	 * In case a particular match failed in a transactional rule, rollback any
+	 * state-changing operations that were performed as part of this match
+	 * 
+	 * @param env
+	 */
+	public void rollback(BindingVector env);
 }

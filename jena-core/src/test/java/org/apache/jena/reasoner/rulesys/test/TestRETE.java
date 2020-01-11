@@ -148,6 +148,10 @@ public class TestRETE  extends TestCase {
             this.isAdd = isAdd;
         }
         
+        @Override
+        public void setPreceding(RETESourceNode preceding) {
+    	}
+        
         /**
          * Clone this node in the network across to a different context.
          * @param netCopy a map from RETENodes to cloned instance so far.

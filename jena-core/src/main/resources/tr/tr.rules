@@ -1,0 +1,8 @@
+[simulPolicy:
+(?p, rdf:type, cig:SimulTasksPolicy) & 
+	(?p cig:intPt ?t) & (?t rdf:type cig:Candidate) & (?t cig:startTime ?st) & 
+	(?p cig:intPt ?u) & (?u rdf:type cig:Candidate) & (?u cig:startTime ?su) &
+	notEqual(?t, ?u) & within(?st, ?su, cig:X)
+
+-> (?t cig:simulTask ?u)
+]

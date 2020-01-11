@@ -1,0 +1,12 @@
+@prefix cig: <http://niche.cs.dal.ca/ns/cig/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+@base <http://niche.cs.dal.ca/ns/cig/> .
+
+<#p> rdf:type cig:SimulTasksPolicy ;
+	cig:intPt <#t> ;
+	cig:intPt <#u> .
+<#t> rdf:type cig:Candidate ;
+	cig:startTime <#st> .
+<#u> rdf:type cig:Candidate ;
+	cig:startTime <#ut> .

@@ -19,17 +19,23 @@
 package org.apache.jena.reasoner.rulesys.impl;
 
 /**
- * Interface for all inner nodes in the RETE network. Tokens are 
- * represented by binding environments. This representation only works
- * if we don't overlap the networks for different rules.
+ * Interface for all inner nodes in the RETE network. Tokens are represented by
+ * binding environments. This representation only works if we don't overlap the
+ * networks for different rules.
  */
 public interface RETESinkNode extends RETENode {
 
-    /** 
-     * Propagate a token to this node.
-     * @param env a set of variable bindings for the rule being processed. 
-     * @param isAdd distinguishes between add and remove operations.
-     */
-    public void fire(BindingVector env, boolean isAdd);
-    
+	/**
+	 * Set the preceding node for this node.
+	 */
+	public void setPreceding(RETESourceNode preceding);
+
+	/**
+	 * Propagate a token to this node.
+	 * 
+	 * @param env   a set of variable bindings for the rule being processed.
+	 * @param isAdd distinguishes between add and remove operations.
+	 */
+	public void fire(BindingVector env, boolean isAdd);
+
 }
