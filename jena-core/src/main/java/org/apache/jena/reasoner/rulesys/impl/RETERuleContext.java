@@ -51,6 +51,16 @@ public class RETERuleContext implements RuleContext {
     }
     
     /**
+     * Constructor.
+     * @param graph the inference graph which owns this context.
+     */
+    public RETERuleContext(ForwardRuleInfGraphI graph, RETEEngine engine, Rule rule) {
+        this.graph = graph;
+        this.engine = engine;
+        this.rule = rule;
+    }
+    
+    /**
      * Returns the current variable binding environment for the current rule.
      * @return BindingEnvironment
      */

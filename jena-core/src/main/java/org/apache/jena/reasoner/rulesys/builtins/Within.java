@@ -1,9 +1,9 @@
-package org.apache.jena.reasoner.rulesys;
-
-import java.util.Arrays;
+package org.apache.jena.reasoner.rulesys.builtins;
 
 import org.apache.jena.graph.Node;
-import org.apache.jena.reasoner.rulesys.builtins.BaseBuiltin;
+import org.apache.jena.reasoner.rulesys.BindingEnvironment;
+import org.apache.jena.reasoner.rulesys.BuiltinException;
+import org.apache.jena.reasoner.rulesys.RuleContext;
 
 public class Within extends BaseBuiltin {
 
@@ -41,10 +41,25 @@ public class Within extends BaseBuiltin {
 		checkArgs(length, context);
 
 		if (length < 2)
-			throw new BuiltinException(this, context, "builtin " + getName() + " requires at least 2 arguments");
+			throw new BuiltinException(this, context, "builtin requires at least 2 arguments");
 
 //		System.out.println(Arrays.asList(args).subList(0, length - 1) + " within " + args[length - 1]);
 
 		return true;
+	}
+
+	/**
+	 * Returns whether this is a transitional builtin, i.e., which needs to be
+	 * rolled back when the rule ultimately fails.
+	 */
+	public boolean isTransition() {
+		return true;
+	}
+
+	/**
+	 * In case of a transitional builtin, rollback the underlying action.
+	 */
+	public void rollback(BindingEnvironment env) {
+		System.out.println("Within.rollback");
 	}
 }

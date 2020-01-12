@@ -18,22 +18,23 @@
 
 package org.apache.jena.reasoner.rulesys;
 
-import org.apache.jena.shared.JenaException ;
+import org.apache.jena.shared.JenaException;
 
 /**
- * Exceptions thrown by runtime errors in executing rule system
- * builtin operations.
+ * Exceptions thrown by runtime errors in executing rule system builtin
+ * operations.
  */
 public class BuiltinException extends JenaException {
 
-    /**
-     * Constructor.
-     * @param builtin the invoking builtin
-     * @param context the invoking rule context
-     * @param message a text explanation of the error
-     */
-    public BuiltinException(Builtin builtin, RuleContext context, String message) {
-        super("Error in clause of rule (" + context.getRule().toShortString() + ") "
-                                         + builtin.getName() + ": " + message);
-    }
+	/**
+	 * Constructor.
+	 * 
+	 * @param builtin the invoking builtin
+	 * @param context the invoking rule context
+	 * @param message a text explanation of the error
+	 */
+	public BuiltinException(Builtin builtin, RuleContext context, String message) {
+		super("Error in clause of rule (" + context.getRule().toShortString() + ") for builtin '" + builtin.getName()
+				+ "': " + message);
+	}
 }

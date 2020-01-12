@@ -290,122 +290,7 @@ public class RETEEngine implements FRuleEngineI {
 	 *                     be ignored
 	 */
 	public void compile(List<Rule> rules, boolean ignoreBrules) {
-		clauseIndex = new OneToManyMap<>();
-		predicatePatterns = new OneToManyMap<>();
-		wildcardRule = false;
-
-		RETERuleContext context = new RETERuleContext(infGraph, this);
-		for (Rule rule : rules) {
-			if (ignoreBrules && rule.isBackward()) {
-				continue;
-			}
-
-			int numVars = rule.getNumVars();
-			boolean[] seenVar = new boolean[numVars];
-			RETESourceNode first = null;
-			RETESourceNode prior = null;
-
-			for (int i = 0; i < rule.bodyLength(); i++) {
-				Object clause = rule.getBodyElement(i);
-
-				if (clause instanceof TriplePattern) {
-					// Create the filter node for this pattern
-					ArrayList<Node> clauseVars = new ArrayList<>(numVars);
-
-					RETEClauseFilter clauseNode = RETEClauseFilter.compile((TriplePattern) clause, numVars, clauseVars);
-					clauseNode.id = clause.toString();
-
-					Node predicate = ((TriplePattern) clause).getPredicate();
-					Node object = ((TriplePattern) clause).getObject();
-					if (predicate.isVariable()) {
-						clauseIndex.put(Node.ANY, clauseNode);
-						wildcardRule = true;
-					} else {
-						clauseIndex.put(predicate, clauseNode);
-						if (!wildcardRule) {
-							if (object.isVariable()) {
-								object = Node.ANY;
-							}
-							if (Functor.isFunctor(object)) {
-								object = Node.ANY;
-							}
-							recordPredicatePattern(predicate, object);
-						}
-					}
-
-					// Create list of variables which should be cross matched between the earlier
-					// clauses and this one
-					ArrayList<Byte> matchIndices = new ArrayList<>(numVars);
-					for (Iterator<Node> iv = clauseVars.iterator(); iv.hasNext();) {
-						int varIndex = ((Node_RuleVariable) iv.next()).getIndex();
-						if (seenVar[varIndex]) {
-							matchIndices.add(new Byte((byte) varIndex));
-						}
-						seenVar[varIndex] = true;
-					}
-
-					// Build the join node
-					if (prior == null) {
-						// First clause, no joins yet
-						prior = clauseNode;
-						clauseNode.id = clauseNode.id;
-						first = prior;
-					} else {
-						RETEJoinQueue leftQ = new RETEJoinMemoryQueue(matchIndices, rule.isTransactional());
-						RETEJoinQueue rightQ = new RETEJoinMemoryQueue(matchIndices, rule.isTransactional());
-						leftQ.setSibling(rightQ);
-						rightQ.setSibling(leftQ);
-						leftQ.id = (prior instanceof RETEClauseFilter ? prior.getId() : "join");
-						rightQ.id = clauseNode.id;
-						clauseNode.setContinuation(rightQ);
-						rightQ.setPreceding(clauseNode);
-						prior.setContinuation(leftQ);
-						leftQ.setPreceding(prior);
-						prior = leftQ;
-					}
-
-				} else if (rule.isTransactional()) {
-
-					if (clause instanceof Functor) {
-						Functor fn = (Functor) clause;
-
-						RETEFunctorFilter fnNode = new RETEFunctorFilter(fn, context, rule.isTransactional());
-						fnNode.id = fn.toString();						
-
-						if (prior == null) {
-							throw new ReasonerException("Transactional functor with unbound variables: " + fn.getName()
-									+ " in " + rule.toShortString());
-						} else {
-							// TODO throw compile-time exception when unbound variables exist in functor
-							RETEJoinQueue leftQ = new RETEJoinQueue(rule.isTransactional());
-							RETEFunctorFilter rightQ = fnNode;
-							leftQ.setSibling(rightQ);
-							rightQ.setSibling(leftQ);
-							leftQ.id = "join";
-							rightQ.id = fnNode.id;
-							prior.setContinuation(leftQ);
-							leftQ.setPreceding(prior);
-							prior = leftQ;
-						}
-					}
-				}
-			}
-
-			// Finished compiling a rule - add terminal
-			if (prior != null) {
-				RETETerminal term = createTerminal(rule);
-				prior.setContinuation(term);
-			}
-
-			print(first);
-		}
-
-		if (wildcardRule)
-			predicatePatterns = null;
-	}
-
-	private void print(RETESourceNode first) {
-		System.out.println(new RETEPrinter().print(first));
+		new RETECompiler().compile(rules, ignoreBrules);
 	}
 
 	/**
@@ -434,6 +319,188 @@ public class RETEEngine implements FRuleEngineI {
 	 */
 	protected RETETerminal createTerminal(Rule rule) {
 		return new RETETerminal(rule, this, infGraph);
+	}
+
+	/**
+	 * Class for compiling a RETE network.
+	 */
+	protected class RETECompiler {
+
+		private RETERuleContext context;
+		private int numVars;
+		private boolean[] seenVar;
+		private RETESourceNode first;
+		private RETESourceNode prior;
+
+		private boolean transactional;
+		private int firstTrIdx;
+		private int lastTrIdx;
+
+		private boolean priorTr;
+		private boolean nextOrCurTr;
+
+		/**
+		 * Compile a list of rules into the internal rule store representation.
+		 * 
+		 * @param rules        the list of Rule objects
+		 * @param ignoreBrules set to true if rules written in backward notation should
+		 *                     be ignored
+		 */
+		public void compile(List<Rule> rules, boolean ignoreBrules) {
+			clauseIndex = new OneToManyMap<>();
+			predicatePatterns = new OneToManyMap<>();
+			wildcardRule = false;
+
+			for (Rule rule : rules) {
+				if (ignoreBrules && rule.isBackward()) {
+					continue;
+				}
+
+				compileRule(rule);
+			}
+
+			if (wildcardRule)
+				predicatePatterns = null;
+		}
+
+		private void compileRule(Rule rule) {
+			setupRuleVars(rule);
+			setupTransactionVars(rule);
+
+			for (int i = 0; i < rule.bodyLength(); i++) {
+				Object clause = rule.getBodyElement(i);
+
+				priorTr = (transactional && firstTrIdx != -1 && i > firstTrIdx);
+				nextOrCurTr = (transactional && lastTrIdx != -1 && i <= lastTrIdx);
+
+				if (clause instanceof TriplePattern) {
+					compileClauseFilter((TriplePattern) clause, rule);
+
+				} else if (transactional) {
+
+					if (clause instanceof Functor) {
+						compileFunctorFilter((Functor) clause, rule);
+					}
+				}
+			}
+
+			// Finished compiling a rule - add terminal
+			if (prior != null) {
+				RETETerminal term = createTerminal(rule);
+				prior.setContinuation(term);
+			}
+
+			System.out.println("\nNetwork:");
+			System.out.println(new RETEPrinter().print(first));
+		}
+
+		private void setupRuleVars(Rule rule) {
+			context = new RETERuleContext(infGraph, RETEEngine.this, rule);
+			numVars = rule.getNumVars();
+			seenVar = new boolean[numVars];
+			first = null;
+			prior = null;
+		}
+
+		private void setupTransactionVars(Rule rule) {
+			transactional = rule.isTransactional();
+			firstTrIdx = -1;
+			lastTrIdx = -1;
+
+			if (transactional) {
+				for (int i = 0; i < rule.bodyLength(); i++) {
+					if (rule.getBodyElement(i) instanceof Functor) {
+						Functor functor = (Functor) rule.getBodyElement(i);
+						if (functor.isTransition()) {
+							if (firstTrIdx == -1)
+								firstTrIdx = i;
+							if (i > lastTrIdx)
+								lastTrIdx = i;
+						}
+					}
+				}
+			}
+
+			priorTr = false;
+			nextOrCurTr = false;
+		}
+
+		private void compileClauseFilter(TriplePattern clause, Rule rule) {
+			// Create the filter node for this pattern
+			ArrayList<Node> clauseVars = new ArrayList<>(numVars);
+
+			RETEClauseFilter clauseNode = RETEClauseFilter.compile(clause, numVars, clauseVars);
+			clauseNode.id = clause.toString();
+
+			Node predicate = ((TriplePattern) clause).getPredicate();
+			Node object = ((TriplePattern) clause).getObject();
+			if (predicate.isVariable()) {
+				clauseIndex.put(Node.ANY, clauseNode);
+				wildcardRule = true;
+			} else {
+				clauseIndex.put(predicate, clauseNode);
+				if (!wildcardRule) {
+					if (object.isVariable()) {
+						object = Node.ANY;
+					}
+					if (Functor.isFunctor(object)) {
+						object = Node.ANY;
+					}
+					recordPredicatePattern(predicate, object);
+				}
+			}
+
+			// Create list of variables which should be cross matched between the earlier
+			// clauses and this one
+			ArrayList<Byte> matchIndices = new ArrayList<>(numVars);
+			for (Iterator<Node> iv = clauseVars.iterator(); iv.hasNext();) {
+				int varIndex = ((Node_RuleVariable) iv.next()).getIndex();
+				if (seenVar[varIndex]) {
+					matchIndices.add(new Byte((byte) varIndex));
+				}
+				seenVar[varIndex] = true;
+			}
+
+			// Build the join node
+			if (prior == null) {
+				// First clause, no joins yet
+				prior = clauseNode;
+				clauseNode.id = clauseNode.id;
+				first = prior;
+			} else {
+				RETEJoinQueue leftQ = new RETEJoinMemoryQueue(matchIndices, transactional, priorTr, nextOrCurTr);
+				RETEJoinQueue rightQ = new RETEJoinMemoryQueue(matchIndices, transactional, priorTr, nextOrCurTr);
+				leftQ.setSibling(rightQ);
+				rightQ.setSibling(leftQ);
+				leftQ.id = (prior instanceof RETEClauseFilter ? prior.getId() : "join");
+				rightQ.id = clauseNode.id;
+				clauseNode.setContinuation(rightQ);
+				rightQ.setPreceding(clauseNode);
+				prior.setContinuation(leftQ);
+				leftQ.setPreceding(prior);
+				prior = leftQ;
+			}
+		}
+
+		private void compileFunctorFilter(Functor fn, Rule rule) {
+			RETEFunctorFilter fnNode = new RETEFunctorFilter(fn, context, transactional);
+			fnNode.id = fn.toString();
+			if (prior == null) {
+				throw new ReasonerException("Transactional functor with unbound variables: " + fn.getName() + " in "
+						+ rule.toShortString());
+			} else {
+				// TODO throw compile-time exception when unbound variables exist in functor
+				RETEJoinQueue leftQ = new RETEJoinQueue(transactional, priorTr, nextOrCurTr);
+				RETEFunctorFilter rightQ = fnNode;
+				leftQ.setSibling(rightQ);
+				rightQ.setSibling(leftQ);
+				leftQ.id = "join";
+				rightQ.id = fnNode.id;
+				prior.setContinuation(leftQ);
+				leftQ.setPreceding(prior);
+				prior = leftQ;
+			}
+		}
 	}
 
 //  =======================================================================
@@ -693,5 +760,4 @@ public class RETEEngine implements FRuleEngineI {
 			this.isMonotonic = isMonotonic;
 		}
 	}
-
 }

@@ -18,8 +18,11 @@
 
 package org.apache.jena.reasoner.rulesys.builtins;
 
-import org.apache.jena.graph.* ;
-import org.apache.jena.reasoner.rulesys.* ;
+import org.apache.jena.graph.Node;
+import org.apache.jena.reasoner.rulesys.BindingEnvironment;
+import org.apache.jena.reasoner.rulesys.Builtin;
+import org.apache.jena.reasoner.rulesys.BuiltinException;
+import org.apache.jena.reasoner.rulesys.RuleContext;
 
 /**
  * Dummy implementation of the Builtin interface that specific
@@ -115,4 +118,16 @@ public abstract class BaseBuiltin implements Builtin {
         return context.getEnv().getGroundVersion(args[n]);
     }
 
+    /**
+	 * Returns whether this is a transitional builtin, i.e., which needs to be
+	 * rolled back when the rule ultimately fails.
+	 */
+	public boolean isTransition() {
+		return false;
+	}
+	
+	/**
+	 * In case of a transitional builtin, rollback the underlying action.
+	 */
+	public void rollback(BindingEnvironment env) {}
 }

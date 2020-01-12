@@ -26,8 +26,8 @@ public class RETEJoinMemoryQueue extends RETEJoinQueue {
 	 * @param matchIndices set of variable indices which should match between the
 	 *                     two inputs
 	 */
-	public RETEJoinMemoryQueue(byte[] matchIndices, boolean isTransactional) {
-		super(isTransactional);
+	public RETEJoinMemoryQueue(byte[] matchIndices, boolean isTransactional, boolean priorTr, boolean nextTr) {
+		super(isTransactional, priorTr, nextTr);
 
 		this.matchIndices = matchIndices;
 		this.queue = new BindingVectorMultiSet(matchIndices);
@@ -40,8 +40,10 @@ public class RETEJoinMemoryQueue extends RETEJoinQueue {
 	 * @param matchIndexList List of variable indices which should match between the
 	 *                       two inputs
 	 */
-	public RETEJoinMemoryQueue(List<? extends Byte> matchIndexList, boolean isTransactional) {
-		super(isTransactional);
+	public RETEJoinMemoryQueue(List<? extends Byte> matchIndexList, boolean isTransactional, boolean priorTransition,
+			boolean nextOrCurTransition) {
+
+		super(isTransactional, priorTransition, nextOrCurTransition);
 
 		int len = matchIndexList.size();
 		matchIndices = new byte[len];
@@ -83,7 +85,7 @@ public class RETEJoinMemoryQueue extends RETEJoinQueue {
 	public RETENode clone(Map<RETENode, RETENode> netCopy, RETERuleContext context) {
 		RETEJoinMemoryQueue clone = (RETEJoinMemoryQueue) netCopy.get(this);
 		if (clone == null) {
-			clone = new RETEJoinMemoryQueue(matchIndices, isTransactional);
+			clone = new RETEJoinMemoryQueue(matchIndices, isTransactional, priorTransition, nextOrCurTransition);
 			netCopy.put(this, clone);
 			clone.setSibling((RETEJoinQueue) sibling.clone(netCopy, context));
 			clone.setContinuation((RETESinkNode) continuation.clone(netCopy, context));

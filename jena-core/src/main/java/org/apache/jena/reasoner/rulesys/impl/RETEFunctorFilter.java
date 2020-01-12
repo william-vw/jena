@@ -26,12 +26,17 @@ public class RETEFunctorFilter extends RETEQueue {
 
 	@Override
 	public Iterator<BindingVector> getSubSet(BindingVector env) {
-		context.setEnv(env);
+		try {
+			context.setEnv(env);
+			if (functor.evalAsBodyClause(context))
+				return new SingletonIterator<BindingVector>(env);
+			else
+				return new EmptyIterator<BindingVector>();
 
-		if (functor.evalAsBodyClause(context))
-			return new SingletonIterator<BindingVector>(env);
-		else
-			return new EmptyIterator<BindingVector>();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
@@ -41,7 +46,8 @@ public class RETEFunctorFilter extends RETEQueue {
 
 	@Override
 	public void rollback(BindingVector env) {
-		// TODO
+//		System.out.println("rollback: " + functor);
+		functor.rollback(env);
 	}
 
 	@Override

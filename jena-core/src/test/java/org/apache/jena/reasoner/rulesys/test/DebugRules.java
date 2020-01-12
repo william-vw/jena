@@ -30,7 +30,7 @@ import org.apache.jena.reasoner.rulesys.BuiltinRegistry;
 import org.apache.jena.reasoner.rulesys.GenericRuleReasonerFactory;
 import org.apache.jena.reasoner.rulesys.Rule;
 import org.apache.jena.reasoner.rulesys.Util;
-import org.apache.jena.reasoner.rulesys.Within;
+import org.apache.jena.reasoner.rulesys.builtins.Within;
 import org.apache.jena.util.FileManager;
 import org.apache.jena.util.PrintUtil;
 import org.apache.jena.vocabulary.ReasonerVocabulary;
@@ -62,12 +62,11 @@ public class DebugRules {
 //	}
 
 	public void run() {
-		PrintUtil.registerPrefix("cig", "http://niche.cs.dal.ca/ns/cig/");
+		PrintUtil.registerPrefix("cig", "http://niche.cs.dal.ca/ns/cig#");
 		BuiltinRegistry.theRegistry.register("within", new Within());
 
-		List<Rule> ruleset = Rule.parseRules(Util.loadRuleParserFromResourceFile(ruleFile));
-		System.out.println("Rules:");
-		ruleset.stream().forEach(r -> System.out.println(r));
+		List<Rule> rules = Rule.parseRules(Util.loadRuleParserFromResourceFile(ruleFile));
+		printRules(rules);
 
 		Model m = ModelFactory.createDefaultModel();
 		Resource config = m.createResource();
@@ -78,8 +77,24 @@ public class DebugRules {
 		Model data = FileManager.get().loadModel(dataFile, "TURTLE");
 		InfModel infModel = ModelFactory.createInfModel(reasoner, data);
 
-		System.out.println("\nDerivations:");
+		printDerivations(infModel);
+		
+		infModel.remove(data.createResource("http://niche.cs.dal.ca/ns/cig#t"),
+				data.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+				data.createResource("http://niche.cs.dal.ca/ns/cig#Candidate"));
+
+		printDerivations(infModel);
+	}
+
+	private void printRules(List<Rule> rules) {
+		System.out.println("Rules:");
+		rules.stream().forEach(r -> System.out.println(r));
+	}
+
+	private void printDerivations(InfModel infModel) {
 		StmtIterator stmtIt = infModel.getDeductionsModel().listStatements();
+
+		System.out.println("\nDerivations:");
 		while (stmtIt.hasNext())
 			System.out.println(stmtIt.next());
 	}

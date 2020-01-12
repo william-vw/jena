@@ -29,6 +29,14 @@ import org.apache.jena.graph.Node;
  */
 public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 
+	/** Whether a prior RETE node involves a transition (transactional rules) **/
+	protected boolean priorTransition;
+	/**
+	 * Whether the current or a next RETE node involves a transition (transactional
+	 * rules)
+	 **/
+	protected boolean nextOrCurTransition;
+
 	/** The node that results were passed on from */
 	protected RETESourceNode preceding;
 
@@ -37,8 +45,11 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 	 * a continuation node.
 	 * 
 	 */
-	public RETEJoinQueue(boolean isTransactional) {
+	public RETEJoinQueue(boolean isTransactional, boolean priorTransition, boolean nextOrCurTransition) {
 		super(isTransactional);
+
+		this.priorTransition = priorTransition;
+		this.nextOrCurTransition = nextOrCurTransition;
 	}
 
 	/**
@@ -77,7 +88,13 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 				BindingVector newEnv = new BindingVector(newNodes);
 
 				if (isTransactional && !isAdd) {
-					sibling.propagateRollback(newEnv);
+					// (1) initial "fire" call; rollback prior transitions
+					// (2) propagated calls; rollback "current" sibling transition
+					if (isAlphaQueue() || nextOrCurTransition) {
+						System.out.println(
+								"delete.rollback: " + (isAlphaQueue() ? id : "join " + sibling.getId()) + "; " + env);
+						sibling.propagateRollback(newEnv);
+					}
 				}
 
 				// Fire the successor processing
@@ -91,10 +108,16 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 		}
 	}
 
+	protected boolean isAlphaQueue() {
+		return (preceding instanceof RETEClauseFilter);
+	}
+
 	@Override
 	protected void propagateRollback(BindingVector env) {
-//		System.out.println("doRollback: " + id + "; " + env);
-		preceding.rollback(env);
+		if (isAlphaQueue() || priorTransition) {
+			System.out.println("propagateRollback: " + id + "; " + env);
+			preceding.rollback(env);
+		}
 	}
 
 	@Override

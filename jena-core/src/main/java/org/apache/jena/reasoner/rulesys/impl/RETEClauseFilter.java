@@ -279,9 +279,8 @@ public class RETEClauseFilter implements RETESourceNode {
 	}
 
 	@Override
-	// TODO
 	public void rollback(BindingVector env) {
-
+//		System.out.println("RETEClauseFilter.rollback");
 	}
 
 	/**
