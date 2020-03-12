@@ -40,7 +40,7 @@ public class RETEFunctorFilter extends RETEQueue {
 	}
 
 	@Override
-	protected void propagateRollback(BindingVector env) {
+	protected void propagateToPreceding(BindingVector env) {
 		rollback(env);
 	}
 

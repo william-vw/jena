@@ -51,7 +51,7 @@ public abstract class RETEQueue implements RETESourceNode {
 		this.sibling = sibling;
 	}
 
-	protected abstract void propagateRollback(BindingVector env);
+	protected abstract void propagateToPreceding(BindingVector env);
 
 	public abstract Iterator<BindingVector> getSubSet(BindingVector env);
 }

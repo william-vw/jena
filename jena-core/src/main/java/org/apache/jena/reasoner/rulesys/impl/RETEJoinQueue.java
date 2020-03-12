@@ -77,7 +77,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 			while (i.hasNext()) {
 				Node[] candidate = i.next().getEnvironment();
 				// matching is no longer required since getSubSet(env) returns
-				// a HashMap with matching BindingVector's
+				// a HashMap with matching BindingVectors
 
 				// Instantiate a new extended environment
 				Node[] newNodes = new Node[candidate.length];
@@ -85,25 +85,34 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 					Node n = candidate[j];
 					newNodes[j] = (n == null) ? envNodes[j] : n;
 				}
-				BindingVector newEnv = new BindingVector(newNodes);
 
+				BindingVector newEnv = new BindingVector(newNodes);
 				if (isTransactional && !isAdd) {
-					// (1) initial "fire" call; rollback prior transitions
-					// (2) propagated calls; rollback "current" sibling transition
+					// - in case of the initial call:
+					// (preceding node is an alpha node)
+					// sibling will ask its preceding node to rollback
+					// (either an alpha node or other join queue)
+
+					// - in case of a call lower-down in network:
+					// (preceding node is a join queue)
+					// sibling will ask its preceding node to rollback
+					// (will always be an alpha node)
 					if (isAlphaQueue() || nextOrCurTransition) {
 						System.out.println(
 								"delete.rollback: " + (isAlphaQueue() ? id : "join " + sibling.getId()) + "; " + env);
-						sibling.propagateRollback(newEnv);
+						sibling.propagateToPreceding(newEnv);
 					}
 				}
 
 				// Fire the successor processing
+				// (for a delete in transactional rule, this will also
+				// propagate the delete to lower down in the network)
 				continuation.fire(newEnv, isAdd);
 			}
 
-		} else if (isTransactional) {
-			if (isAdd) {
-				propagateRollback(env);
+		} else {
+			if (isTransactional && isAdd) {
+				propagateToPreceding(env);
 			}
 		}
 	}
@@ -113,7 +122,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 	}
 
 	@Override
-	protected void propagateRollback(BindingVector env) {
+	protected void propagateToPreceding(BindingVector env) {
 		if (isAlphaQueue() || priorTransition) {
 			System.out.println("propagateRollback: " + id + "; " + env);
 			preceding.rollback(env);
@@ -122,7 +131,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 
 	@Override
 	public void rollback(BindingVector env) {
-		sibling.propagateRollback(env);
+		sibling.propagateToPreceding(env);
 
 		preceding.rollback(env);
 	}

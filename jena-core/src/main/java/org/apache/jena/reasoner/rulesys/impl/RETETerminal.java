@@ -92,6 +92,7 @@ public class RETETerminal implements RETESinkNode {
 
 		// in transactional rules, functors are added directly to network
 		// (see RETEFunctorFilter class)
+		
 		if (!rule.isTransactional()) {
 			if (!context.shouldFire(isAdd))
 				return;
