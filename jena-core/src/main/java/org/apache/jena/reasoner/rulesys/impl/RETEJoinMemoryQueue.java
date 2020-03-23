@@ -72,7 +72,7 @@ public class RETEJoinMemoryQueue extends RETEJoinQueue {
 	}
 
 	@Override
-	public Iterator<BindingVector> getSubSet(BindingVector env) {
+	public Iterator<BindingVector> getSubSet(BindingVector env, boolean isAdd) {
 		return queue.getSubSet(env);
 	}
 

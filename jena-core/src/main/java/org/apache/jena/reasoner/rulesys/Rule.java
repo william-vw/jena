@@ -1086,7 +1086,9 @@ public class Rule implements ClauseEntry {
 				if (clause.getImplementor() == null) {
 					// Not a.error error becase later processing can add this
 					// implementation to the registry
-					logger.warn("Rule references unimplemented functor: " + name);
+					// logger.warn("Rule references unimplemented functor: " + name);
+					
+					System.err.println("[Rule] unknown functor: " + name);
 				}
 				return clause;
 			}

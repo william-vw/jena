@@ -106,7 +106,11 @@ public class Functor implements ClauseEntry {
 	public Functor(String name, List<Node> args, Builtin impl) {
 		this.name = name;
 		this.args = args.toArray(new Node[] {});
-		this.implementor = impl;
+		
+		if (impl != null) {
+			impl.setRuleArgs(args);
+			this.implementor = impl;
+		}
 	}
 
 	/**
@@ -239,7 +243,7 @@ public class Functor implements ClauseEntry {
 	 * implementor (builtin).
 	 */
 	public boolean isTransition() {
-		return implementor.isTransition();
+		return getImplementor().isTransition();
 	}
 
 	/**

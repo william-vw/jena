@@ -18,6 +18,8 @@
 
 package org.apache.jena.reasoner.rulesys;
 
+import java.util.List;
+
 import org.apache.jena.graph.Node;
 
 /**
@@ -101,7 +103,15 @@ public interface Builtin {
 	public boolean isTransition();
 
 	/**
-	 * In case of a transitional builtin, rollback the underlying action.
+	 * In case of a transitional builtin, rolls back the underlying action.
+	 * 
 	 */
 	public void rollback(BindingEnvironment env);
+
+	/**
+	 * Pass the relevant arguments to the builtin (see e.g., AllWithinPeriod)
+	 * 
+	 * @param args
+	 */
+	public void setRuleArgs(List<Node> args);
 }

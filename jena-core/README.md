@@ -8,6 +8,10 @@ Its goal is to implement a forward-chaining version of [Transaction Logic](https
 
 ### Extensions:
 
+##### `org.apache.jena.reasoner.rulesys.impl.RETEPrinter`
+
+This class can be used outside of this particular project - it simply prints the compiled RETE network.
+
 ##### `org.apache.jena.reasoner.rulesys.Rule.Parser` 
 
 The rule syntax is extended with an "serial conjunction" logical operator, i.e., '`&`'. Currently, only one type of conjunction is supported per rule, i.e., a rule either contains all '`,`' (classic conjunction) or all '`&`' (serial conjunction) operators. Any rule containing the '`&`' logical operator will be considered a transaction.

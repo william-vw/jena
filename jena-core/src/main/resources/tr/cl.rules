@@ -1,4 +1,0 @@
-[discardPolicy:
-(?p rdf:type cig:DiscardTaskPolicy) , (?p cig:intPt ?t) , (?t cig:event cig:activated) , (?p cig:intPt ?u) , notEqual(?t, ?u)
-	-> (?p cig:discard ?u)
-]

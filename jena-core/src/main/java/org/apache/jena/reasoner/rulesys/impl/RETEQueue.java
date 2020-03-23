@@ -53,5 +53,5 @@ public abstract class RETEQueue implements RETESourceNode {
 
 	protected abstract void propagateToPreceding(BindingVector env);
 
-	public abstract Iterator<BindingVector> getSubSet(BindingVector env);
+	public abstract Iterator<BindingVector> getSubSet(BindingVector env, boolean isAdd);
 }

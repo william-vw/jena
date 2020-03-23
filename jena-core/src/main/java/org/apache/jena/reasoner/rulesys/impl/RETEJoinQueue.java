@@ -71,7 +71,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 		// Cross match new token against the entries in the sibling queue
 		Node[] envNodes = env.getEnvironment();
 
-		Iterator<BindingVector> i = sibling.getSubSet(env);
+		Iterator<BindingVector> i = sibling.getSubSet(env, isAdd);
 		if (i.hasNext()) {
 
 			while (i.hasNext()) {
@@ -98,8 +98,8 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 					// sibling will ask its preceding node to rollback
 					// (will always be an alpha node)
 					if (isAlphaQueue() || nextOrCurTransition) {
-						System.out.println(
-								"delete.rollback: " + (isAlphaQueue() ? id : "join " + sibling.getId()) + "; " + env);
+//						System.out.println("[RETEJoinQueue] delete.rollback: "
+//								+ (isAlphaQueue() ? id : "join " + sibling.getId()) + "; " + env);
 						sibling.propagateToPreceding(newEnv);
 					}
 				}
@@ -124,7 +124,6 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 	@Override
 	protected void propagateToPreceding(BindingVector env) {
 		if (isAlphaQueue() || priorTransition) {
-			System.out.println("propagateRollback: " + id + "; " + env);
 			preceding.rollback(env);
 		}
 	}
@@ -137,8 +136,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 	}
 
 	@Override
-	public Iterator<BindingVector> getSubSet(BindingVector env) {
-		// TODO Auto-generated method stub
+	public Iterator<BindingVector> getSubSet(BindingVector env, boolean isAdd) {
 		return null;
 	}
 
