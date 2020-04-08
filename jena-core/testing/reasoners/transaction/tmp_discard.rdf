@@ -1,0 +1,19 @@
+@prefix cig: <http://niche.cs.dal.ca/ns/cig-into#> .
+@prefix sa: <http://www.owl-ontologies.com/Ontology1212072707.owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://niche.cs.dal.ca/ns/cig-into#> .
+
+# - cig
+
+cig:copd_ct_scan a sa:Diagnostic_Task ;
+	cig:activeTime "2" .
+
+cig:pe_ctpa_scan a sa:Diagnostic_Task ;
+	cig:activeTime "5" .
+
+# - policy
+
+cig:p a cig:RedunTasksPolicy ;
+	cig:essen cig:pe_ctpa_scan ;
+	cig:redun cig:copd_ct_scan .

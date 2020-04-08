@@ -109,7 +109,7 @@ public interface Builtin {
 	public void rollback(BindingEnvironment env);
 
 	/**
-	 * Pass the relevant arguments to the builtin (see e.g., AllWithinPeriod)
+	 * Pass a list of nodes, representing the arguments, to the builtin
 	 * 
 	 * @param args
 	 */

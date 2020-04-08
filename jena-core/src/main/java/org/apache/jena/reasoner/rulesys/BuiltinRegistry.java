@@ -21,95 +21,110 @@ import org.apache.jena.reasoner.rulesys.builtins.*;
  */
 
 public abstract class BuiltinRegistry {
-    /** The default base registry */
-    public static BuiltinRegistry theRegistry;
-    static {
-        theRegistry=new MapBuiltinRegistry();
-        theRegistry.register(new Print());
-        theRegistry.register(new AddOne());
-        theRegistry.register(new LessThan());
-        theRegistry.register(new GreaterThan());
-        theRegistry.register(new LE());
-        theRegistry.register(new GE());
-        theRegistry.register(new Equal());
-        theRegistry.register(new NotFunctor());
-        theRegistry.register(new IsFunctor());
-        theRegistry.register(new NotEqual());
-        theRegistry.register(new MakeTemp());
-        theRegistry.register(new NoValue());
-        theRegistry.register(new Remove());
-        theRegistry.register(new Drop());
-        theRegistry.register(new Sum());
-        theRegistry.register(new Difference());
-        theRegistry.register(new Product());
-        theRegistry.register(new Quotient());
-        theRegistry.register(new Bound());
-        theRegistry.register(new Unbound());
-        theRegistry.register(new IsLiteral());
-        theRegistry.register(new NotLiteral());
-        theRegistry.register(new IsBNode());
-        theRegistry.register(new NotBNode());
-        theRegistry.register(new IsDType());
-        theRegistry.register(new NotDType());
-        theRegistry.register(new CountLiteralValues());
-        theRegistry.register(new Max());
-        theRegistry.register(new Min());
-        theRegistry.register(new ListLength());
-        theRegistry.register(new ListEntry());
-        theRegistry.register(new ListEqual());
-        theRegistry.register(new ListNotEqual());
-        theRegistry.register(new ListContains());
-        theRegistry.register(new ListNotContains());
-        theRegistry.register(new ListMapAsSubject());
-        theRegistry.register(new ListMapAsObject());
+	/** The default base registry */
+	public static BuiltinRegistry theRegistry;
+	static {
+		theRegistry = new MapBuiltinRegistry();
+		theRegistry.register(new Print());
+		theRegistry.register(new AddOne());
+		theRegistry.register(new LessThan());
+		theRegistry.register(new GreaterThan());
+		theRegistry.register(new LE());
+		theRegistry.register(new GE());
+		theRegistry.register(new Equal());
+		theRegistry.register(new NotFunctor());
+		theRegistry.register(new IsFunctor());
+		theRegistry.register(new NotEqual());
+		theRegistry.register(new MakeTemp());
+		theRegistry.register(new NoValue());
+		theRegistry.register(new Remove());
+		theRegistry.register(new Drop());
+		theRegistry.register(new Sum());
+		theRegistry.register(new Difference());
+		theRegistry.register(new Product());
+		theRegistry.register(new Quotient());
+		theRegistry.register(new Bound());
+		theRegistry.register(new Unbound());
+		theRegistry.register(new IsLiteral());
+		theRegistry.register(new NotLiteral());
+		theRegistry.register(new IsBNode());
+		theRegistry.register(new NotBNode());
+		theRegistry.register(new IsDType());
+		theRegistry.register(new NotDType());
+		theRegistry.register(new CountLiteralValues());
+		theRegistry.register(new Max());
+		theRegistry.register(new Min());
+		theRegistry.register(new ListLength());
+		theRegistry.register(new ListEntry());
+		theRegistry.register(new ListEqual());
+		theRegistry.register(new ListNotEqual());
+		theRegistry.register(new ListContains());
+		theRegistry.register(new ListNotContains());
+		theRegistry.register(new ListMapAsSubject());
+		theRegistry.register(new ListMapAsObject());
 
-        theRegistry.register(new MakeInstance());
-        theRegistry.register(new Table());
-        theRegistry.register(new TableAll());
+		theRegistry.register(new MakeInstance());
+		theRegistry.register(new Table());
+		theRegistry.register(new TableAll());
 
-        theRegistry.register(new MakeSkolem());
+		theRegistry.register(new MakeSkolem());
 
-        theRegistry.register(new Hide());
+		theRegistry.register(new Hide());
 
-        theRegistry.register(new StrConcat());
-        theRegistry.register(new UriConcat());
-        theRegistry.register(new Regex());
+		theRegistry.register(new StrConcat());
+		theRegistry.register(new UriConcat());
+		theRegistry.register(new Regex());
 
-        theRegistry.register(new Now());
+		theRegistry.register(new Now());
 
-        // Special purposes support functions for OWL
-        theRegistry.register(new AssertDisjointPairs());
+		// Special purposes support functions for OWL
+		theRegistry.register(new AssertDisjointPairs());
 
-    }
+	}
 
-    /**
-     * Register an implementation for a given builtin using its default name.
-     * @param impl the implementation of the builtin
-     */
+	/**
+	 * Register an implementation for a given builtin using its default name.
+	 * 
+	 * @param impl the implementation of the builtin
+	 */
 
-    public abstract void register(Builtin impl);
-    /**
-     * Register an implementation for a given builtin functor.
-     * @param functor the name of the functor used to invoke the builtin
-     * @param impl the implementation of the builtin
-     */
+	public abstract void register(Builtin impl);
 
-    public abstract void register(String functor, Builtin impl);
-    /**
-     * Find the implementation of the given builtin functor.
-     * @param functor the name of the functor being invoked.
-     * @return a Builtin or null if there is none registered under that name
-     */
+	/**
+	 * Register an implementation for a given builtin functor.
+	 * 
+	 * @param functor the name of the functor used to invoke the builtin
+	 * @param impl    the implementation of the builtin
+	 */
 
-    public abstract Builtin getImplementation(String functor);
+	public abstract void register(String functor, Builtin impl);
 
-    /**
-     * Find the implementation of the given builtin functor.
-     * @param uri the URI of the builtin to be retrieved
-     * @return a Builtin or null if there is none registered under that name
-     */
+	/**
+	 * Register an implementation for a given builtin functor.
+	 * 
+	 * @param functor the name of the functor used to invoke the builtin
+	 * @param impl    the implementation class of the builtin
+	 */
 
-    public abstract Builtin getImplementationByURI(String uri);
+	@SuppressWarnings("rawtypes")
+	public abstract void register(String functor, Class impl);
 
+	/**
+	 * Find the implementation of the given builtin functor.
+	 * 
+	 * @param functor the name of the functor being invoked.
+	 * @return a Builtin or null if there is none registered under that name
+	 */
+
+	public abstract Builtin getImplementation(String functor);
+
+	/**
+	 * Find the implementation of the given builtin functor.
+	 * 
+	 * @param uri the URI of the builtin to be retrieved
+	 * @return a Builtin or null if there is none registered under that name
+	 */
+
+	public abstract Builtin getImplementationByURI(String uri);
 
 }

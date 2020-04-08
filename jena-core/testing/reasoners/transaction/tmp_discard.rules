@@ -1,0 +1,9 @@
+[redunTasks:
+	(?p rdf:type cig:RedunTasksPolicy) &
+		(?p cig:essen ?e) & (?e cig:activeTime ?et) & 
+		(?p cig:redun ?r) & (?r cig:activeTime ?rt) &
+		tmp:withinPeriodAfter(?r, ?rt, ?e, ?et) & 
+		task:discard(?r)
+	->
+	(?p cig:redunTask ?r)
+]

@@ -25,7 +25,7 @@ public interface RETESourceNode extends RETENode {
 
 	/** For testing only **/
 	public String getId();
-	
+
 	/**
 	 * Set the continuation node for this node.
 	 */
@@ -35,7 +35,12 @@ public interface RETESourceNode extends RETENode {
 	 * Get the continuation node for this node.
 	 */
 	public RETESinkNode getContinuation();
-	
+
+	/**
+	 * Returns whether this is an alpha node.
+	 */
+	public boolean isAlphaNode();
+
 	/**
 	 * In case a particular match failed in a transactional rule, rollback any
 	 * state-changing operations that were performed as part of this match

@@ -21,48 +21,68 @@ package org.apache.jena.reasoner.rulesys;
 import java.util.HashMap;
 import java.util.Map;
 
-/** * A registry for mapping functor names on java objects (instances 
- * of subclasses of Builtin) which implement their behaviour.
+/**
+ * * A registry for mapping functor names on java objects (instances of
+ * subclasses of Builtin) which implement their behaviour.
  * <p>
- * This is currently implemented as a singleton to simply any future
- * move to support different sets of builtins.
+ * This is currently implemented as a singleton to simply any future move to
+ * support different sets of builtins.
  * 
  * @see Builtin
  */
 public class MapBuiltinRegistry extends BuiltinRegistry {
 
-    /** Mapping from functor name to Builtin implementing it */
-    protected Map<String,Builtin> builtins = new HashMap<>();
-    
-    /** Mapping from URI of builtin to implementation */
-    protected Map<String,Builtin> builtinsByURI = new HashMap<>();
+	/** Mapping from functor name to Builtin implementing it */
+	protected Map<String, Builtin> builtins = new HashMap<>();
 
-    /**
-     * Construct an empty registry
-     */
-    public MapBuiltinRegistry() {
-    }
+	/** Mapping from functor name to Builtin class implementing it */
+	protected Map<String, Class> builtinCls = new HashMap<>();
 
-    @Override
-    public void register(String functor, Builtin impl) {
-        builtins.put(functor, impl);
-        builtinsByURI.put(impl.getURI(), impl);
-    }
+	/** Mapping from URI of builtin to implementation */
+	protected Map<String, Builtin> builtinsByURI = new HashMap<>();
 
-    @Override
-    public void register(Builtin impl) {
-        builtins.put(impl.getName(), impl);
-        builtinsByURI.put(impl.getURI(), impl);
-    }
-    
-    @Override
-    public Builtin getImplementation(String functor) {
-        return builtins.get(functor);
-    }
-    
-    @Override
-    public Builtin getImplementationByURI(String uri) {
-        return builtinsByURI.get(uri);
-    }
-    
+	/**
+	 * Construct an empty registry
+	 */
+	public MapBuiltinRegistry() {
+	}
+
+	@Override
+	public void register(String functor, Builtin impl) {
+		builtins.put(functor, impl);
+		builtinsByURI.put(impl.getURI(), impl);
+	}
+
+	@Override
+	public void register(String functor, Class impl) {
+		builtinCls.put(functor, impl);
+		// TODO builtinsByURI
+	}
+
+	@Override
+	public void register(Builtin impl) {
+		builtins.put(impl.getName(), impl);
+		builtinsByURI.put(impl.getURI(), impl);
+	}
+
+	@Override
+	public Builtin getImplementation(String functor) {
+		if (builtinCls.containsKey(functor)) {
+			try {
+				return (Builtin) builtinCls.get(functor).newInstance();
+
+			} catch (InstantiationException | IllegalAccessException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+		} else
+			return builtins.get(functor);
+	}
+
+	@Override
+	public Builtin getImplementationByURI(String uri) {
+		return builtinsByURI.get(uri);
+	}
+
 }

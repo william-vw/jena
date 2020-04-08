@@ -141,7 +141,7 @@ public abstract class BaseBuiltin implements Builtin {
 	}
 
 	/**
-	 * Pass the relevant arguments to the builtin (see e.g., AllWithinPeriod)
+	 * Pass a list of nodes, representing the arguments, to the builtin
 	 * 
 	 * @param args
 	 */

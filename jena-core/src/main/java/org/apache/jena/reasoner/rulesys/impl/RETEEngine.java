@@ -390,8 +390,8 @@ public class RETEEngine implements FRuleEngineI {
 				prior.setContinuation(term);
 			}
 
-			// System.out.println("\nRETE network:");
-			// System.out.println(new RETEPrinter().print(first) + "\n");
+			System.out.println("RETE network:");
+			System.out.println(new RETEPrinter().print(first) + "\n");
 		}
 
 		private void setupRuleVars(Rule rule) {

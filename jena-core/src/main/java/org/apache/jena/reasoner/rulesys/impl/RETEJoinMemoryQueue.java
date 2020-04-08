@@ -1,5 +1,6 @@
 package org.apache.jena.reasoner.rulesys.impl;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,13 @@ public class RETEJoinMemoryQueue extends RETEJoinQueue {
 
 	@Override
 	public Iterator<BindingVector> getSubSet(BindingVector env, boolean isAdd) {
-		return queue.getSubSet(env);
+		// some builtins may edit the underlying KB
+		// so, ensure that this does not cause a concurrent-modification exception
+
+		List<BindingVector> ret = new ArrayList<>();
+		queue.getSubSet(env).forEachRemaining(e -> ret.add(e));
+
+		return ret.iterator();
 	}
 
 	/**

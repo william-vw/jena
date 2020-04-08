@@ -1,26 +1,47 @@
 package org.apache.jena.reasoner.rulesys.impl;
 
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.jena.reasoner.rulesys.Functor;
+import org.apache.jena.reasoner.rulesys.Transition;
+import org.apache.jena.reasoner.rulesys.Transition.JoinAttempt;
+import org.apache.jena.reasoner.rulesys.Transition.RollbackListener;
+import org.apache.jena.reasoner.rulesys.Transition.TransitionMemory;
 import org.apache.jena.util.iterator.EmptyIterator;
 import org.apache.jena.util.iterator.SingletonIterator;
 
-public class RETEFunctorFilter extends RETEQueue {
+/**
+ * A clause representing a functor (built-in) call. It doubles as an alpha node
+ * as well as a beta node.
+ * 
+ * 
+ * @author wvw
+ *
+ */
+
+public class RETEFunctorFilter extends RETEQueue implements TransitionMemory, RollbackListener {
 
 	protected Functor functor;
 	protected RETERuleContext context;
+
 	// only used for transitions
-	protected Set<BindingVector> joins = new HashSet<>();
+	// (~ acts as a special type of join memory)
+	protected Map<BindingVector, JoinAttempt> state = new HashMap<>();
 
 	public RETEFunctorFilter(Functor functor, RETERuleContext context, boolean isTransactional) {
 		super(isTransactional);
 
 		this.functor = functor;
 		this.context = context;
+
+		if (functor.isTransition()) {
+			Transition tr = (Transition) functor.getImplementor();
+			tr.setRollbackListener(this);
+			tr.setMemory(this);
+		}
 	}
 
 	@Override
@@ -30,37 +51,55 @@ public class RETEFunctorFilter extends RETEQueue {
 
 	@Override
 	public Iterator<BindingVector> getSubSet(BindingVector env, boolean isAdd) {
-		if (!functor.isTransition() || isAdd) {
-			try {
-				context.setEnv(env);
+		context.setEnv(env);
 
-				if (functor.evalAsBodyClause(context)) {
-					
-					if (functor.isTransition())
-						joins.add(env);
-					
-					return new SingletonIterator<BindingVector>(env);
+		// in case of a transition:
+		// when removing a token, a join will be attempted with this queue
+		// but we don't want to re-apply the builtin just for the purpose of
+		// re-confirming a join - either it was successful previously or not
 
-				} else
-					return new EmptyIterator<BindingVector>();
+		// so, keep joins here and use them to confirm deletes
 
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
+		// note that this is not the only reason for keeping state;
+		// state can also be utilized by transition built-ins
 
-			// when removing a token, a join will be attempted with this queue
-			// but we don't want to re-apply the builtin just for the purpose of
-			// re-confirming the join - this was already done previously
-
-			// so, keep successful joins here and use them to confirm deletes
+		if (functor.isTransition() && !isAdd) {
+			JoinAttempt a = state.remove(env);
+			if (a != null && a.isJoined())
+				return new SingletonIterator<BindingVector>(env);
+			else
+				return new EmptyIterator<BindingVector>();
 
 		} else {
-			if (joins.remove(env))
+			boolean joined = functor.evalAsBodyClause(context);
+			if (functor.isTransition())
+				state.put(env, new JoinAttempt(env, joined));
+
+			if (joined)
 				return new SingletonIterator<BindingVector>(env);
 			else
 				return new EmptyIterator<BindingVector>();
 		}
+	}
+
+	@Override
+	public Collection<JoinAttempt> state() {
+		return state.values();
+	}
+
+	@Override
+	public void joinFromFunctor(JoinAttempt a) {
+		a.setJoined(true);
+
+		continuation.fire(a.getToken(), true);
+	}
+
+	@Override
+	public void rollbackFromFunctor(JoinAttempt a) {
+		a.setJoined(false);
+
+		sibling.propagateToPreceding(a.getToken());
+		continuation.fire(a.getToken(), false);
 	}
 
 	@Override
@@ -69,8 +108,18 @@ public class RETEFunctorFilter extends RETEQueue {
 	}
 
 	@Override
+	public boolean isAlphaNode() {
+		return true;
+	}
+
+	@Override
 	public void rollback(BindingVector env) {
+		// System.out.println("[RETEFunctorFilter] rollback: " +
+		// functor.getImplementor().getName() + " - " + env);
 		functor.rollback(env);
+
+		if (functor.isTransition())
+			state.remove(env);
 	}
 
 	@Override

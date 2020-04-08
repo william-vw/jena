@@ -79,7 +79,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 				// matching is no longer required since getSubSet(env) returns
 				// a HashMap with matching BindingVectors
 
-				// Instantiate a new extended environment
+				// instantiate a new extended environment
 				Node[] newNodes = new Node[candidate.length];
 				for (int j = 0; j < candidate.length; j++) {
 					Node n = candidate[j];
@@ -94,7 +94,7 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 					// (either an alpha node or other join queue)
 
 					// - in case of a call lower-down in network:
-					// (preceding node is a join queue)
+					// (i.e., preceding node is a join queue)
 					// sibling will ask its preceding node to rollback
 					// (will always be an alpha node)
 					if (isAlphaQueue() || nextOrCurTransition) {
@@ -104,21 +104,34 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 					}
 				}
 
-				// Fire the successor processing
-				// (for a delete in transactional rule, this will also
-				// propagate the delete to lower down in the network)
+				// fire the successor processing
+
+				// for a delete in a transactional rule, this will also
+				// propagate the delete to lower down in the network
+
 				continuation.fire(newEnv, isAdd);
 			}
 
 		} else {
 			if (isTransactional && isAdd) {
+				// in case of a failed join,
+				// propagate rollback to prior nodes
+
+				// - in case of an alpha node:
+				// directly rollback this token
+
+				// - in case of a join queue:
+				// propagate rollback to prior join queue
+				// (1) will ask its sibling alpha queue to roll back
+				// (2) will propagate rollback to prior join queue
+
 				propagateToPreceding(env);
 			}
 		}
 	}
 
 	protected boolean isAlphaQueue() {
-		return (preceding instanceof RETEClauseFilter);
+		return preceding.isAlphaNode();
 	}
 
 	@Override
@@ -129,9 +142,13 @@ public class RETEJoinQueue extends RETEQueue implements RETESinkNode {
 	}
 
 	@Override
+	public boolean isAlphaNode() {
+		return false;
+	}
+
+	@Override
 	public void rollback(BindingVector env) {
 		sibling.propagateToPreceding(env);
-
 		preceding.rollback(env);
 	}
 

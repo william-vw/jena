@@ -23,39 +23,58 @@ import java.util.Map;
 
 public class OverrideBuiltinRegistry extends BuiltinRegistry {
 
-    /** Mapping from functor name to Builtin implementing it */
-    final protected Map<String,Builtin> builtins = new HashMap<>();
+	/** Mapping from functor name to Builtin implementing it */
+	final protected Map<String, Builtin> builtins = new HashMap<>();
 
-    /** Mapping from URI of builtin to implementation */
-    final protected Map<String,Builtin> builtinsByURI = new HashMap<>();
+	/** Mapping from functor name to Builtin class implementing it */
+	protected Map<String, Class> builtinCls = new HashMap<>();
 
-    final protected BuiltinRegistry innerRegistry;
+	/** Mapping from URI of builtin to implementation */
+	final protected Map<String, Builtin> builtinsByURI = new HashMap<>();
 
-    public OverrideBuiltinRegistry(BuiltinRegistry innerRegistry) {
-        this.innerRegistry = innerRegistry;
-    }
+	final protected BuiltinRegistry innerRegistry;
 
-    @Override
-    public void register(String functor, Builtin impl) {
-        builtins.put(functor, impl);
-        builtinsByURI.put(impl.getURI(), impl);
-    }
+	public OverrideBuiltinRegistry(BuiltinRegistry innerRegistry) {
+		this.innerRegistry = innerRegistry;
+	}
 
-    @Override
-    public void register(Builtin impl) {
-        builtins.put(impl.getName(), impl);
-        builtinsByURI.put(impl.getURI(), impl);
-    }
+	@Override
+	public void register(String functor, Builtin impl) {
+		builtins.put(functor, impl);
+		builtinsByURI.put(impl.getURI(), impl);
+	}
 
-    @Override
-    public Builtin getImplementation(String functor) {
-        Builtin that=builtins.get(functor);
-        return that==null ? innerRegistry.getImplementation(functor) : that;
-    }
+	@Override
+	public void register(String functor, Class impl) {
+		builtinCls.put(functor, impl);
+	}
 
-    @Override
-    public Builtin getImplementationByURI(String uri) {
-        Builtin that=builtinsByURI.get(uri);
-        return that==null ? innerRegistry.getImplementationByURI(uri) : that;
-    }
+	@Override
+	public void register(Builtin impl) {
+		builtins.put(impl.getName(), impl);
+		builtinsByURI.put(impl.getURI(), impl);
+	}
+
+	@Override
+	public Builtin getImplementation(String functor) {
+		Builtin that = null;
+		if (builtinCls.containsKey(functor)) {
+			try {
+				that = (Builtin) builtinCls.get(functor).newInstance();
+
+			} catch (InstantiationException | IllegalAccessException e) {
+				e.printStackTrace();
+			}
+
+		} else
+			that = builtins.get(functor);
+
+		return that == null ? innerRegistry.getImplementation(functor) : that;
+	}
+
+	@Override
+	public Builtin getImplementationByURI(String uri) {
+		Builtin that = builtinsByURI.get(uri);
+		return that == null ? innerRegistry.getImplementationByURI(uri) : that;
+	}
 }

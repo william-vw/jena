@@ -18,11 +18,15 @@
 
 package org.apache.jena.reasoner.rulesys.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import org.apache.jena.graph.*;
-import org.apache.jena.reasoner.*;
-import org.apache.jena.reasoner.rulesys.*;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.reasoner.TriplePattern;
+import org.apache.jena.reasoner.rulesys.Functor;
+import org.apache.jena.reasoner.rulesys.Node_RuleVariable;
 
 /**
  * Checks a triple against the grounded matches and intra-triple matches for a
@@ -276,6 +280,11 @@ public class RETEClauseFilter implements RETESourceNode {
 			return lastFunctor.getArgs()[address & 0x0f];
 		}
 		return null;
+	}
+	
+	@Override
+	public boolean isAlphaNode() {
+		return true;
 	}
 
 	@Override
