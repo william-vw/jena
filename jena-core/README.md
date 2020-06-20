@@ -46,7 +46,7 @@ This means that pre- and post-conditions for updates are possible. For example, 
 In other words:
  
 **if** <img src="https://render.githubusercontent.com/render/math?math=P,D+\{won\} \models happy"> **then** 
-<img src="https://render.githubusercontent.com/render/math?math=P,D,D+\{won\} \models happy">
+<img src="https://render.githubusercontent.com/render/math?math=P,D,D+\{won\} \models ins:won \otimes happy">
 
 
 This notion of a post-condition makes <img src="https://render.githubusercontent.com/render/math?math=\mathcal{Tr}"> interesting for 
