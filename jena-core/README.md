@@ -1,7 +1,7 @@
 # Continuous Transactions
 
 This repository is a fork of [Apache Jena](https://github.com/apache/jena.git).
-Its goal is to implement a forward-chaining, RETE-based version of [Transaction Logic](https://en.wikipedia.org/wiki/Transaction_logic) into Jena's RETE structure. Please refer to [here](http://www.linkeddata.mobi/software/continuous-transactions-on-the-semantic-web/) for details on the basic idea and use case. 
+Its goal is to implement a forward-chaining, RETE-based version of [Transaction Logic](https://en.wikipedia.org/wiki/Transaction_logic) into Jena's RETE structure. Please refer to [this blog post](http://www.linkeddata.mobi/software/continuous-transactions-on-the-semantic-web/) for the basic idea and use case. 
 
 ### TL;DR
 
